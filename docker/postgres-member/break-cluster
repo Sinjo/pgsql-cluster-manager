@@ -129,7 +129,14 @@ read -p "Press enter to break everything"
 node-exec "$PRIMARY" psql -U postgres postgres -c "CREATE TABLE repro (data TEXT);"
 node-exec "$PRIMARY" psql -U postgres postgres -c "SELECT pg_switch_xlog();"
 
+# node-exec "$PRIMARY" psql -U postgres postgres -c "CREATE TABLE talks (data TEXT);"
+# node-exec "$PRIMARY" psql -U postgres postgres -c "SELECT pg_switch_xlog();"
+
 node-exec "$SYNC" bash -c "crm configure property maintenance-mode=true"
+
+# node-exec "$PRIMARY" psql -U postgres postgres -c "INSERT INTO talks VALUES ('binary-logs')";
+# node-exec "$PRIMARY" psql -U postgres postgres -c "INSERT INTO talks VALUES ('niche-git-features')";
+# node-exec "$PRIMARY" psql -U postgres postgres -c "INSERT INTO talks VALUES ('fp-karaoke')";
 
 node-exec "$PRIMARY" psql -U postgres postgres -c "INSERT INTO repro VALUES ('A')";
 node-exec "$PRIMARY" psql -U postgres postgres -c "INSERT INTO repro VALUES ('AB')";
@@ -149,19 +156,19 @@ kill-nine-postgres "$PRIMARY"
 # Not doing this for now as we're not sure it reflects what really happened
 # turn-off-corosync "$PRIMARY"
 
-# LATEST_WAL=$(get-latest-wal-name "$PRIMARY")
-# extract-wal "$PRIMARY" "$LATEST_WAL"
+LATEST_WAL=$(get-latest-wal-name "$PRIMARY")
+extract-wal "$PRIMARY" "$LATEST_WAL"
 
-# break-wal "$LATEST_WAL"
+break-wal "$LATEST_WAL"
 
-# inject-wal "$SYNC" "$LATEST_WAL".broken
-# inject-wal "$POTENTIAL" "$LATEST_WAL".broken
+inject-wal "$SYNC" "$LATEST_WAL".broken
+inject-wal "$POTENTIAL" "$LATEST_WAL".broken
 
-# read -p "Press enter to kill WAL writer on sync ($SYNC) and bring cluster out of maintenance"
+read -p "Press enter to kill WAL writer on sync ($SYNC) and bring cluster out of maintenance"
 
 # Running this query means we get the "aborting due to a crash in another process" log
-# node-exec "$SYNC" psql -U postgres postgres -c 'SELECT pg_sleep(10)' > /dev/null 2>&1 &
-# sleep 2
+node-exec "$SYNC" psql -U postgres postgres -c 'SELECT pg_sleep(10)' > /dev/null 2>&1 &
+sleep 2
 send-signal-postgres-worker $SYNC "writer" "SIGABRT"
 
 node-exec "$SYNC" bash -c "crm configure property maintenance-mode=false"

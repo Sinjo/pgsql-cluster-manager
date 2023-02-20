@@ -18,7 +18,7 @@ COPY resource_agents/pgsql /usr/lib/ocf/resource.d/heartbeat/
 COPY start-cluster.bash /bin/start-cluster
 
 # Install psmisc so we have killall to run pacemaker stop from init script
-RUN apt-get update && apt-get install psmisc
+# RUN apt-get update && apt-get install psmisc
 
 EXPOSE 5432 6432 2379
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
