@@ -17,8 +17,18 @@ COPY resource_agents/pgsql /usr/lib/ocf/resource.d/heartbeat/
 
 COPY start-cluster.bash /bin/start-cluster
 
+# Install support for https apt repos since Postgres ones now require it
+#
+# To do that, we need to temporarily move the Postgres one out the way
+RUN mv /etc/apt/sources.list.d/pgdg.list /root/pgdg.list
+RUN apt-get update && apt-get install apt-transport-https ca-certificates
+RUN mv /root/pgdg.list /etc/apt/sources.list.d/pgdg.list
+
+# Switch to apt-archive as Postgres repo has moved there
+RUN sed -i 's/apt.post/apt-archive.post/' /etc/apt/sources.list.d/pgdg.list
+
 # Install psmisc so we have killall to run pacemaker stop from init script
-# RUN apt-get update && apt-get install psmisc
+RUN apt-get update && apt-get install psmisc
 
 EXPOSE 5432 6432 2379
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
