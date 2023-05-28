@@ -4,19 +4,23 @@ set -eu
 
 # Automated by this script:
 #
+# - Add backup VIP to cluster and force it to synchronous replica
+#
 # - Create a table called temp (SERIAL, TEXT)
 # - SELECT pg_switch_xlog
 # - Put the cluster into maintenance mode
 # - Insert data
-# - kill -9 the primary Postgres instance
-# - Copy latest WAL out to edit
-
-# Manual steps:
 #
+# - kill -9 the primary Postgres instance
+#
+# - Copy latest WAL out to edit
 # - Set one of the WAL record sizes to zero (null byte)
 # - Copy that WAL into /tmp/wals/ on both replicas
+#
+# - Send SIGABRT to synchronous replica
+#
 # - Take the cluster out of maintenance
-# - See what lols ensue
+# - See what happens
 
 # Discarded steps:
 #
